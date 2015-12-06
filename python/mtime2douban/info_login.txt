@@ -1,0 +1,7 @@
+[douban]
+email = your_email
+password = your_password
+[mtime]
+email = your_email
+password = your_password
+
