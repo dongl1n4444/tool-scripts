@@ -22,6 +22,9 @@ num_wish_success = 0
 num_log_error = 0
 num_log_waring = 0
 
+user_email = ""
+user_password = ""
+
 def log(level, text):
     global num_log_error
     global num_log_waring
@@ -195,8 +198,8 @@ def login_mtime():
     url_login = 'http://passport.mtime.com'
     params = {
         "redirectUrl" : "http://my.mtime.com",
-        "email" : "",
-        "password" : "",
+        "email" : user_email,
+        "password" : user_password,
     }
 
     response = opener.open(url_login, urllib.urlencode(params))
@@ -227,12 +230,31 @@ def login_mtime():
                 return False
     elif response.geturl() == "http://my.mtime.com/":
         return True
+    
+    return False
 
 if __name__ == '__main__':
 
     log(LOG_NORMAL, "-------start-------")
     log(LOG_NORMAL, time.strftime("%Y-%m-%d %H:%M:%S"))
+    
+    # read user email and password
+    fp_logininfo = open("info_login.txt", 'r')
+    line = fp_logininfo.readline()
+    while line:
+        line = line.strip()
+        if line == "[mtime]":
+            line = fp_logininfo.readline()
+            user_email = line[line.find('=')+1:].strip()
+            line = fp_logininfo.readline()
+            user_password = line[line.find('=')+1:].strip()
+            #
+            break
+        # next
+        line = fp_logininfo.readline() 
+    fp_logininfo.close()
 
+    # login in
     ret_login = login_mtime()
     if ret_login:
         print "login success"
@@ -242,7 +264,7 @@ if __name__ == '__main__':
             p["ck"] = c[0].strip('"')
 
         # collect
-        # do_collect(p["ck"])
+        do_collect(p["ck"])
 
         # wish
         do_wish(p["ck"])
