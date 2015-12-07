@@ -3,6 +3,56 @@ import urllib, urllib2, cookielib
 from bs4 import BeautifulSoup
 import json
 import time
+import math
+
+"""
+function $encodePassword(h) {
+    if (h.length < 6) {
+        return h
+    }
+    var j = h.substr(0, 1);
+    if (j == "*") {
+        var f = parseInt(h.substr(h.length-2, 2), 10);
+        if (f == h.length) {
+            return h
+        }
+    }
+    var g = _encode64(h);
+    var f = g.length + 1 + 2;
+    if (f < 10) {
+        f = "0" + f
+    }
+    return "*" + g + f
+}
+function _encode64(v) {
+    var w = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    var x = "";
+    var n, o, p = "";
+    var q, r, s, t = "";
+    var u = 0;
+    do {
+        n = v.charCodeAt(u++);
+        o = v.charCodeAt(u++);
+        p = v.charCodeAt(u++);
+        q = n>>2;
+        r = ((n & 3)<<4) | (o>>4);
+        s = ((o & 15)<<2) | (p>>6);
+        t = p & 63;
+        if (isNaN(o)) {
+            s = t = 64
+        } else {
+            if (isNaN(p)) {
+                t = 64
+            }
+        }
+        x = x + w.charAt(q) + w.charAt(r) + w.charAt(s) + w.charAt(t);
+        n = o = p = "";
+        q = r = s = t = ""
+    }
+    while (u < v.length);
+    return x
+}
+"""
 
 cookie = cookielib.CookieJar()
 opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie))
@@ -38,6 +88,51 @@ def log(level, text):
     elif level == LOG_ERROR:
         num_log_error = num_log_error + 1
         fp_log.write("xx" + str(num_log_error) + ":" +text + "\n")
+        
+def _encode64(pwd):
+    w = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+    x = n = o = p = q = r = s = t = ""
+    u = 0
+    
+    while 1:
+        n = ord(pwd[u])
+        u += 1
+        o = ord(pwd[u])
+        u += 1
+        p = ord(pwd[u])
+        u += 1
+        q = n>>2;
+        r = ((n & 3)<<4) | (o>>4);
+        s = ((o & 15)<<2) | (p>>6);
+        t = p & 63;
+        if math.isnan(o):
+            s = t = 64
+        elif math.isnan(p):
+            t = 64
+            
+        x = x + w[q] + w[r] + w[s] + w[t]
+        n = o = p = "";
+        q = r = s = t = ""
+        
+        if u >= len(pwd):
+            break
+    return x
+        
+def encode_password(pwd):
+    if len(pwd) < 6:
+        return pwd
+    #var j = h.substr(0, 1);
+    #if (j == "*") {
+    #    var f = parseInt(h.substr(h.length-2, 2), 10);
+    #    if (f == h.length) {
+    #        return h
+    #    }
+    #}
+    g = _encode64(pwd);
+    f = len(g) + 1 + 2;
+    if f < 10:
+        f = "0" + f
+    return "*" + g + str(f)
 
 def do_collect(ck):
     global num_collect_total
@@ -199,7 +294,7 @@ def login_mtime():
     params = {
         "redirectUrl" : "http://my.mtime.com",
         "email" : user_email,
-        "password" : user_password,
+        "password" : encode_password(user_password),
     }
 
     response = opener.open(url_login, urllib.urlencode(params))
@@ -234,7 +329,7 @@ def login_mtime():
     return False
 
 if __name__ == '__main__':
-
+    
     log(LOG_NORMAL, "-------start-------")
     log(LOG_NORMAL, time.strftime("%Y-%m-%d %H:%M:%S"))
     
@@ -276,6 +371,6 @@ if __name__ == '__main__':
     log(LOG_NORMAL, "error:" + str(num_log_error) + "\t\t" + "waring:" + str(num_log_waring))
     log(LOG_NORMAL, "collect:" + str(num_collect_success) + "/" + str(num_collect_total))
     log(LOG_NORMAL, "wish:" + str(num_wish_success) + "/" + str(num_wish_total))
-
+    
     # clean
     fp_log.close()
