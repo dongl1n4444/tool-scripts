@@ -43,14 +43,15 @@ def startJoin():
         
         input_path_list = []
         for ftime in keyList:
-            print dictFiles[ftime]
             input_path_list.append(dictFiles[ftime])
         
     else:
         input_path_list.sort()
 
     # Wrong file path.
+    print '---start join---'
     for path in input_path_list:
+        print path
         if not os.path.isfile(path):
             print 'File not exit: ' + path
             return
@@ -61,11 +62,12 @@ def startJoin():
     
     btnSelect.configure(state='disabled')
     btnJoin.configure(state='disabled')
-    statusBar.set('Start join grf')
+    statusBar.set('Waiting, now joining grfs')
     
     join_flv.join_flv(output_path, input_path_list)
     print 'Succeed!'
     print 'Output file path is ' + output_path
+    print '---end join---'
     
     statusBar.set('Join Succeed')
     
@@ -122,7 +124,6 @@ def main():
     # btnJoin.grid(row=1, column=1)    
     
     def onClickBtnChooseFolder():
-        print "onClickBtnChooseFolder"
         #ety.configure(state="normal")
         #ety.delete(0, 'end')
         #ety.insert(0, 'your name')
