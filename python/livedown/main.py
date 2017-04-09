@@ -1,6 +1,7 @@
 import os
 import sys
 import Tkinter, tkFileDialog, tkMessageBox
+import re
 import join_flv
 
 global gFolderDir
@@ -10,11 +11,11 @@ global btnSelect
 global btnJoin
 global statusBar
 
-global isSortByTime 
-isSortByTime = False
+#global isSortByTime 
+#isSortByTime = False
 
 def startJoin():
-    global gFolderDir, btnSelect, btnJoin, isSortByTime
+    global gFolderDir, btnSelect, btnJoin
     
     flv_folder = str(gFolderDir)
     if not os.path.isdir(flv_folder):
@@ -32,22 +33,32 @@ def startJoin():
         tkMessageBox.showwarning("Open file", "Cannot find any grfs in folder (%s)"%flv_folder)        
         return
     
-    if isSortByTime:
+    # check num prefix
+    isNumPrefix = False
+    if re.search(r'\d+_', input_path_list[0]):
+        isNumPrefix = True
+    
+    if not isNumPrefix:
         dictFiles = {}
         for path in input_path_list:
-            ftime = int(os.path.getmtime(path))
+            ftime = int(os.path.getmtime(path) * 100)
             dictFiles[ftime] = path
             
         keyList = dictFiles.keys()
         keyList.sort()
         
         input_path_list = []
+        idxPrefix = 1
         for ftime in keyList:
-            input_path_list.append(dictFiles[ftime])
+            fname = dictFiles[ftime]
+            kpos = str.rfind(fname, '/')
+            nfname = (fname[0:kpos] + "/%03d_" + fname[kpos + 1:])%(idxPrefix)
+            os.rename(fname, nfname)
+            input_path_list.append(nfname)
+            idxPrefix = idxPrefix + 1
+    #
+    input_path_list.sort()  
         
-    else:
-        input_path_list.sort()
-
     # Wrong file path.
     print '---start join---'
     for path in input_path_list:
@@ -111,13 +122,13 @@ def main():
     # ety.grid(columnspan=2)
     ety.pack(fill=Tkinter.X)
     
-    chbVal = Tkinter.IntVar()
-    def onClickCheckBox():
-        global isSortByTime
-        isSortByTime = chbVal.get()
+    #chbVal = Tkinter.IntVar()
+    #def onClickCheckBox():
+        #global isSortByTime
+        #isSortByTime = chbVal.get()
     
-    chb = Tkinter.Checkbutton(frm, text="Auto sort by file create time", command=onClickCheckBox, variable=chbVal)
-    chb.pack()    
+    #chb = Tkinter.Checkbutton(frm, text="Auto sort by file create time", command=onClickCheckBox, variable=chbVal)
+    #chb.pack()    
     
     btnJoin = Tkinter.Button(frm, text="Join", command=startJoin, state="disabled", width=10)
     btnJoin.pack(side=Tkinter.RIGHT, padx=2, pady=2, fill=Tkinter.X)
