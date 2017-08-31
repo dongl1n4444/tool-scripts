@@ -2,7 +2,9 @@ import sys
 import urllib, urllib2
 from bs4 import BeautifulSoup
 from bs4 import element
+import re
 
+allPlayerData = {}
 playerUrls = []
 attrKeys = []
 
@@ -10,24 +12,52 @@ def updateAttrKey(key):
     if attrKeys.count(key) == 0:
         attrKeys.append(key)
 
-def filterAttrVal(val):
+def filterAttrKey(val):
     for k in ['def.', 'Def.', 'attr.', 'Off.']:
         val = val.replace(k, '')
     return val
 
+def filterInfoVal(val):
+    #return val.replace('\\', '')
+    return val
+
 def parsePlayerUrl(url):
     try:
-        infos = {}
+        print "x- parse url: " + str(url)
+        datPlayer = {}
 
         rsp = urllib2.urlopen(url)
         html = rsp.read()
 
         soup = BeautifulSoup(html)
 
+        # infos
+        infos = {
+            'Name':'',
+            'Theme':'',
+            'Position':'',
+            'Team':'',
+            'Height':'',
+            'Weight':'',
+            'Age':'',
+            'From':''
+        }
+        datPlayer['info'] = infos
+
         tagPlayerView = soup.find('div', id='player-view')
         tagPlayerInfos = tagPlayerView.find('div', class_='col-xs-12 col-md-8')
         name = tagPlayerInfos.div.header.h1.text
-        tagInfo = tagPlayerInfos.find('section', class_='infomation')
+        infos['Name'] = filterInfoVal(name)
+
+        tagInfos = tagPlayerInfos.find('section', class_='information')
+        for tagInfo in tagInfos.find_all('div', class_=re.compile('^col-xs-')):
+            if tagInfo.h6 and str(tagInfo.h6.text) in infos.keys():
+                infoKey = str(tagInfo.h6.text)
+                infos[infoKey] = filterInfoVal(tagInfo.span.text)
+
+        # attrs
+        attrs = {}
+        datPlayer['attr'] = attrs
 
         tagAttrContainer = soup.find('div', class_='attributes-container')
         for tagDiv in tagAttrContainer.find_all('div'):
@@ -39,9 +69,9 @@ def parsePlayerUrl(url):
                     #key = tagHeader.strong.get_text()
                     #val = tagHeader.find('span', class_='attribute-box').get_text()
                     #infos[key] = val
-                    key, val = tagHeader.text.split(' ', 1)
-                    val = filterAttrVal(val)
-                    infos[key] = val
+                    val, key = tagHeader.text.split(' ', 1)
+                    key = filterAttrKey(key)
+                    attrs[key] = val
                     updateAttrKey(key)
 
                 # parse attr list
@@ -59,17 +89,32 @@ def parsePlayerUrl(url):
                         #             val = cot.get_text()
                         #         else:
                         #             key = key + cot.get_text()
-                        key, val = tagLi.text.split(' ', 1)
-                        val = filterAttrVal(val)
-                        infos[key] = val
+                        val, key = tagLi.text.split(' ', 1)
+                        key = filterAttrKey(key)
+                        attrs[key] = val
                         updateAttrKey(key)
 
+        # ranking
+        ranks = {}
+        datPlayer['rank'] = ranks
 
+        tagRanks = soup.find('section', class_='rankings')
+        for tagRank in tagRanks.find_all('li', title=re.compile('^Top')):
+            key = tagRank.span.text
+            val = str(tagRank.contents[0])
+            ranks[key] = val
+
+        #
+
+        #
+        allPlayerData[url] = datPlayer
 
     except urllib2.HTTPError, e:
-        print (e.code)
+        print 'http err: ' + e.code
     except urllib2.URLError, e:
-        print (e.args)
+        print 'url err: ' + e.args
+    except:
+        print 'unknow err'
 
 def main():
     try:
