@@ -1,6 +1,7 @@
 import sys
 import urllib, urllib2
 from bs4 import BeautifulSoup
+from bs4 import element
 
 playerUrls = []
 
@@ -30,7 +31,7 @@ def parsePlayerUrl(url):
                         key = ""
                         val = 0
                         for cot in tagLi.contents:
-                            if type(cot) == type(BeautifulSoup.element.NavigableString):
+                            if type(cot) == type(element.NavigableString):
                                 key = key + cot
                             #elif type(cot) == type(BeautifulSoup.element.Tag):
                             else:
