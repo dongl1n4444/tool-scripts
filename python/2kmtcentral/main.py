@@ -9,6 +9,7 @@ import xlsxwriter
 import time
 import datetime
 import urllib
+import lxml
 
 allPlayerData = {}
 allPlayerUrls = []
@@ -39,7 +40,6 @@ def filterInfoVal(val):
 def saveToExcel():
     try:
         outfile = 'output_' + datetime.datetime.now().strftime("%Y%m%d_%H%M") + '.xlsx'
-
         wbk = xlsxwriter.Workbook(outfile)
         sheet = wbk.add_worksheet("sheet 1")
         nrow = 0
@@ -70,7 +70,7 @@ def saveToExcel():
                 if kk == 'Id':
                     sheet.write(nrow, ncol, str(idx))
                 elif kk == 'Url':
-                    sheet.write(nrow, ncol, url.encode('utf-8'))
+                    sheet.write(nrow, ncol, url)
                 elif kk in datPlayer['info'].keys():
                     sheet.write(nrow, ncol, datPlayer['info'][kk])
                 elif kk in datPlayer['attr'].keys():
@@ -84,10 +84,10 @@ def saveToExcel():
                 ncol = ncol + 1
 
         #
-
         wbk.close()
-    except:
-        print 'unknow error'
+
+    except Exception as err:
+        print 'Error: ' + err
 
 def parsePlayerUrl(url):
     try:
@@ -97,7 +97,7 @@ def parsePlayerUrl(url):
         rsp = urllib2.urlopen(nurl)
         html = rsp.read()
 
-        soup = BeautifulSoup(html)
+        soup = BeautifulSoup(html, 'lxml')
 
         # infos
         infos = {}
@@ -170,7 +170,7 @@ def parsePlayerUrl(url):
 
         rsp = urllib2.urlopen(nurl + "/tendencies")
         html = rsp.read()
-        soup = BeautifulSoup(html)
+        soup = BeautifulSoup(html, 'lxml')
 
         tagAttrContainer = soup.find('div', class_='attributes-container')
         for tagSection in tagAttrContainer.find_all('section'):
@@ -198,19 +198,19 @@ def parsePlayerUrl(url):
         print 'http error: ' + e.code
     except urllib2.URLError, e:
         print 'url error: ' + e.args
-    except:
-        print 'unknow error'
+    except Exception as err:
+        print 'Error: ' + err
 
 def parseAllUrl(fromIndex, toIndex):
     try:
         idxPage = fromIndex
 
-        while idxPage < toIndex:
+        while toIndex == -1 or idxPage < toIndex:
             print "x- parse page: " + "http://2kmtcentral.com/17/players/page/" + str(idxPage)
             rsp = urllib2.urlopen("http://2kmtcentral.com/17/players/page/" + str(idxPage))
             html = rsp.read()
 
-            soup = BeautifulSoup(html)
+            soup = BeautifulSoup(html, 'lxml')
             tags = soup.find_all('tr', class_="box-click")
 
             if tags == None or len(tags) == 0:
@@ -227,20 +227,22 @@ def parseAllUrl(fromIndex, toIndex):
         print 'http error: ' + e.code
     except urllib2.URLError, e:
         print 'url error: ' + e.args
-    except:
-        print 'unknow error'
+    except Exception as err:
+        print 'Error: ' + err
 
 if __name__ == '__main__':
     try:
         beginTime = time.time()
         print "-------------start parse all pages"
-        parseAllUrl(10, 15)
+        parseAllUrl(0, -1)
 
         # test
         # u'http://2kmtcentral.com/17/players/20544/nenê'
-        url = u'http://2kmtcentral.com/17/players/20544/nenê'
-        allPlayerUrls = []
-        allPlayerUrls.append(url)
+        # u'http://2kmtcentral.com/17/players/8324/nenê'
+        # u'http://2kmtcentral.com/17/players/907/nenê'
+        #url = u'http://2kmtcentral.com/17/players/907/nenê'
+        #allPlayerUrls = []
+        #allPlayerUrls.append(url)
 
         print "-------------start parse player url"
         totalPlayerUrlNum = len(allPlayerUrls)
@@ -256,5 +258,6 @@ if __name__ == '__main__':
         endTime = time.time()
         print "Total time: " + str(endTime - beginTime)
 
-    except:
-        print "unknow error"
+
+    except Exception as err:
+        print 'Error: ' + err
