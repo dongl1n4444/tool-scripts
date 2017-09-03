@@ -94,7 +94,14 @@ def parsePlayerUrl(url):
         datPlayer = {}
 
         nurl = urllib.quote(url.encode('utf-8'), ':/')
-        rsp = urllib2.urlopen(nurl)
+
+        rsp = None
+        while True:
+            try:
+                rsp = urllib2.urlopen(nurl)
+            except Exception as err:
+                continue
+            break
         html = rsp.read()
 
         soup = BeautifulSoup(html, 'lxml')
@@ -168,7 +175,12 @@ def parsePlayerUrl(url):
         tends = {}
         datPlayer['tend'] = tends
 
-        rsp = urllib2.urlopen(nurl + "/tendencies")
+        while True:
+            try:
+                rsp = urllib2.urlopen(nurl + "/tendencies")
+            except Exception as err:
+                continue
+            break
         html = rsp.read()
         soup = BeautifulSoup(html, 'lxml')
 
@@ -207,7 +219,15 @@ def parseAllUrl(fromIndex, toIndex):
 
         while toIndex == -1 or idxPage < toIndex:
             print "x- parse page: " + "http://2kmtcentral.com/17/players/page/" + str(idxPage)
-            rsp = urllib2.urlopen("http://2kmtcentral.com/17/players/page/" + str(idxPage))
+
+            rsp = None
+            while True:
+                try:
+                    rsp = urllib2.urlopen("http://2kmtcentral.com/17/players/page/" + str(idxPage))
+                except Exception as err:
+                    continue
+                break
+
             html = rsp.read()
 
             soup = BeautifulSoup(html, 'lxml')
