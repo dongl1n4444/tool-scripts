@@ -18,8 +18,8 @@ global statusBar
 
 def startJoin():
     global gFolderDir, btnSelect, btnJoin
-    
-    flv_folder = str(gFolderDir)
+
+    flv_folder = gFolderDir
     if not os.path.isdir(flv_folder):
         print 'Folder not exit: ' + flv_folder
         return
@@ -27,8 +27,8 @@ def startJoin():
     input_path_list = []
     for parent, dirnames, filenames in os.walk(flv_folder):
         for filename in filenames:
-            # if str.find(filename, '.grf') != -1 or str.find(filename, '.flv') != -1: 
-            if str.find(filename, '.grf') != -1:
+            # if str.find(filename, '.grf') != -1 or str.find(filename, '.flv') != -1:
+            if filename[len(filename)-4:] == '.grf':
                 input_path_list.append(parent + '/' + filename)
                 
     if len(input_path_list) == 0:
@@ -53,7 +53,10 @@ def startJoin():
         idxPrefix = 1
         for ftime in keyList:
             fname = dictFiles[ftime]
-            kpos = str.rfind(fname, '/')
+            if type(fname) == type(u''):
+                kpos = unicode.rfind(fname, '/')
+            else:
+                kpos = str.rfind(fname, '/')
             nfname = (fname[0:kpos] + "/%03d_" + fname[kpos + 1:])%(idxPrefix)
             os.rename(fname, nfname)
             input_path_list.append(nfname)
