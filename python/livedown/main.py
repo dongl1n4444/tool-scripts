@@ -32,49 +32,91 @@ def startJoin():
                 input_path_list.append(parent + '/' + filename)
                 
     if len(input_path_list) == 0:
-        tkMessageBox.showwarning("Open file", "Cannot find any grfs in folder (%s)"%flv_folder)        
+        tkMessageBox.showwarning("WARNING", "在目录 (%s) 不能找到任何 grf 文件"%flv_folder)
         return
-    
+
     # check num prefix
     isNumPrefix = False
-    if re.search(r'\d+_', input_path_list[0]):
-        isNumPrefix = True
-    
-    if not isNumPrefix:
-        dictFiles = {}
-        for path in input_path_list:
-            ftime = int(os.path.getmtime(path) * 100)
-            dictFiles[ftime] = path
-            
-        keyList = dictFiles.keys()
-        keyList.sort()
-        
-        input_path_list = []
-        idxPrefix = 1
-        for ftime in keyList:
-            fname = dictFiles[ftime]
-            if type(fname) == type(u''):
-                kpos = unicode.rfind(fname, '/')
-            else:
-                kpos = str.rfind(fname, '/')
-            nfname = (fname[0:kpos] + "/%03d_" + fname[kpos + 1:])%(idxPrefix)
-            os.rename(fname, nfname)
-            input_path_list.append(nfname)
-            idxPrefix = idxPrefix + 1
-    #
-    input_path_list.sort()  
-        
-    # Wrong file path.
-    print '---start join---'
+    isNumSuffix = False
     for path in input_path_list:
-        print path
-        if not os.path.isfile(path):
-            print 'File not exit: ' + path
-            return
+        mm = re.search(r'^\d+', path)
+        if mm:
+            isNumPrefix = True
+            break
+        else:
+            mm = re.search(r'\d+.grf', path)
+            if mm:
+                isNumSuffix = True
+                break
+
+    if not isNumPrefix and not isNumSuffix:
+        tkMessageBox.showwarning("WARNING", "未找到有效的数字标记")
+        return
+
+    unhandler_paths = []
+    dict_paths = {}
+
+    if isNumSuffix:
+        for path in input_path_list:
+            mm = re.search(r'\d+.grf', path)
+            if mm:
+                dict_paths[int(mm.group(0)[0:-4])] = path
+            else:
+                unhandler_paths.append(path)
+    elif isNumPrefix:
+        for path in input_path_list:
+            mm = re.search(r'^\d+')
+            if mm:
+                dict_paths[int(mm.group(0))] = path
+            else:
+                unhandler_paths.append(path)
+
+    # else:
+    #     dictFiles = {}
+    #     for path in input_path_list:
+    #         ftime = int(os.path.getmtime(path) * 100)
+    #         dictFiles[ftime] = path
+    #
+    #     keyList = dictFiles.keys()
+    #     keyList.sort()
+    #
+    #     input_path_list = []
+    #     idxPrefix = 1
+    #     for ftime in keyList:
+    #         fname = dictFiles[ftime]
+    #         if type(fname) == type(u''):
+    #             kpos = unicode.rfind(fname, '/')
+    #         else:
+    #             kpos = str.rfind(fname, '/')
+    #         nfname = (fname[0:kpos] + "/%03d_" + fname[kpos + 1:])%(idxPrefix)
+    #         os.rename(fname, nfname)
+    #         input_path_list.append(nfname)
+    #         idxPrefix = idxPrefix + 1
+    # #
+    # input_path_list.sort()
+
+    # sort
+    input_path_list = []
+    keys = dict_paths.keys()
+    keys.sort()
+    for i in keys:
+        input_path_list.append(dict_paths[i])
+
+    if len(input_path_list) == 0:
+        tkMessageBox.showwarning("WARNING", "未找到可转换的有效文件")
+        return
+
+    # Wrong file path.
+    # print '---start join---'
+    # for path in input_path_list:
+    #     print path
+    #     if not os.path.isfile(path):
+    #         print 'File not exit: ' + path
+    #         return
         
-    dir_path = os.path.dirname(input_path_list[0])
+    # dir_path = os.path.dirname(input_path_list[0])
     # Output file is created in the same directory as the first input file.
-    output_path = os.path.join(dir_path, 'output.flv')
+    output_path = os.path.join(flv_folder, 'output.flv')
     
     btnSelect.configure(state='disabled')
     btnJoin.configure(state='disabled')
@@ -89,7 +131,10 @@ def startJoin():
     
     btnSelect.configure(state='normal')
     btnJoin.configure(state='normal')
-    
+
+    if len(unhandler_paths) > 0:
+        tkMessageBox.showwarning("未处理文件，请查看文件名是否规范", '\n'.join(unhandler_paths))
+
 class StatusBar(Tkinter.Frame):
     def __init__(self, master):
         global labStatus
