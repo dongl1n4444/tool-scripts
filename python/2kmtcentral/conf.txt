@@ -1,0 +1,5 @@
+MAIN_URL=http://2kmtcentral.com/18/players/theme/current/page/
+// find in [START_INDEX, END_INDEX)
+START_INDEX=0
+// if end_index = -1, get all pages
+END_INDEX=1

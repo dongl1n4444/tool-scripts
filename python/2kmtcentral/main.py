@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-
+import os
 import sys
 import urllib, urllib2
 from bs4 import BeautifulSoup
@@ -10,6 +10,7 @@ import time
 import datetime
 import urllib
 import lxml
+from conf import CONFIGS
 
 allPlayerData = {}
 allPlayerUrls = []
@@ -218,12 +219,13 @@ def parseAllUrl(fromIndex, toIndex):
         idxPage = fromIndex
 
         while toIndex == -1 or idxPage < toIndex:
-            print "x- parse page: " + "http://2kmtcentral.com/17/players/page/" + str(idxPage)
+            print "x- parse page: " + CONFIGS['MAIN_URL'] + str(idxPage)
 
             rsp = None
             while True:
                 try:
-                    rsp = urllib2.urlopen("http://2kmtcentral.com/17/players/page/" + str(idxPage))
+                    
+                    rsp = urllib2.urlopen(CONFIGS['MAIN_URL'] + str(idxPage))
                 except Exception as err:
                     continue
                 break
@@ -248,13 +250,30 @@ def parseAllUrl(fromIndex, toIndex):
     except urllib2.URLError, e:
         print 'url error: ' + e.args
     except Exception as err:
-        print 'Error: ' + err
+        print 'Error: ' + str(err)
 
 if __name__ == '__main__':
     try:
+        file = open('./conf.txt', 'r')
+        for line in file:
+            if line.find('=') == -1 or line.find('//') == 0:
+                continue
+            tt = line.split('=')
+            key = tt[0].strip()
+            if CONFIGS[key] == None:
+                continue
+            else:
+                val_type = type(CONFIGS[key])
+                if val_type == type(''):
+                    CONFIGS[key] = tt[1].strip()
+                elif val_type == type(0):
+                    CONFIGS[key] = int(tt[1].strip())
+
+        file.close()
+
         beginTime = time.time()
         print "-------------start parse all pages"
-        parseAllUrl(0, -1)
+        parseAllUrl(CONFIGS['START_INDEX'], CONFIGS['END_INDEX'])
 
         # test
         # u'http://2kmtcentral.com/17/players/20544/nenê'
